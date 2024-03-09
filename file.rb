@@ -22,7 +22,7 @@ def color_found?(color, secret_code)
   secret_code.include?(color)
 end
 
-def one_hit?(secret_code, guess_code)
+def any_hit?(secret_code, guess_code)
   guess_code.any? { |guess_peg_color| same_position?(guess_peg_color, secret_code, guess_code) }
 end
 
@@ -63,21 +63,20 @@ end
 def feedback_row(secret_code, guess_code)
   processed_secret = secret_code
   processed_guess = guess_code
-  result = []
 
-  4.times do
+  (1..4).reduce([]) do |result, _|
     binding.pry
 
-    if one_hit?(processed_secret, processed_guess)
+    if any_hit?(processed_secret, processed_guess)
       processed_secret, processed_guess = one_hit_removed_from(processed_secret, processed_guess)
       result << :hit
     elsif color_guessed?(processed_secret, processed_guess)
       processed_secret, processed_guess = one_color_removed_from(processed_secret, processed_guess)
       result << :correct_color
     end
-  end
 
-  result
+    result
+  end
 end
 
 def formatted_feedback(secret_code, guess_code)
@@ -96,13 +95,40 @@ def win?(secret_code, guess_code)
   four_hits?(secret_code, guess_code)
 end
 
-secret_code = %w[red red green orange]
-guess_code = %w[]
-
-until win?(secret_code, guess_code)
-  puts "Enter a code: (for example: red, green, blue, yellow)"
-  guess_code = process_guess_code(gets) 
-  puts "Alright, here you go you cheater you: #{secret_code.join(", ")}" if guess_code == %w[show me]
-
-  puts "Here's your feedback: #{ feedback_row(secret_code, guess_code).join(', ') }"
+def codebreaker?(input)
+  input.downcase.to_sym == :codebreaker
 end
+
+def codemaker?(input)
+  input.downcase.to_sym == :codemaker
+end
+
+def choose_game_mode
+  puts "Do you wanna be the one who makes the secret code or the one who breaks it? (input codemaker or codebreaker)"
+  game_mode = gets.chomp
+
+  if codebreaker?(game_mode)
+    codebreaker_game
+  elsif codemaker?(game_mode)
+    puts "TBD"
+  else
+    choose_game_mode
+  end
+end
+
+def codebreaker_game
+  secret_code = random_code
+  guess_code = %w[]
+
+  until win?(secret_code, guess_code)
+    puts "Enter a code: (for example: red, green, blue, yellow)"
+    guess_code = process_guess_code(gets) 
+    puts "Alright, here you go you cheater you: #{secret_code.join(", ")}" if guess_code == %w[show me]
+
+      puts "Here's your feedback: #{ feedback_row(secret_code, guess_code).join(', ') }"
+  end
+
+  puts "You win!"
+end
+
+choose_game_mode
